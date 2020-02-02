@@ -10,15 +10,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Main {
 
@@ -137,10 +135,27 @@ public class Main {
                             bw.write(result);
                             bw.close();
                             tgw.printLine("Отправка файла с ответами на сервак Альберта... (У кого-то будет пять)");
-                            Socket sock=new Socket("https://math-task-checker.herokuapp.com/addVariant/",80);
-                            bw = new BufferedWriter( new OutputStreamWriter(sock.getOutputStream()));
-                            bw.write(result);
-                            bw.close();
+
+                            URL url = new URL("https://math-task-checker.herokuapp.com/addVariant/");
+                            URLConnection con = url.openConnection();
+                            HttpURLConnection http = (HttpURLConnection)con;
+                            http.setRequestMethod("POST"); // PUT is another valid option
+                            http.setDoOutput(true);
+                            Map<String,String> arguments = new HashMap<>();
+                            arguments.put("value", result);
+                            StringJoiner sj = new StringJoiner("&");
+                            for(Map.Entry<String,String> entry : arguments.entrySet())
+                                sj.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
+                                        + URLEncoder.encode(entry.getValue(), "UTF-8"));
+                            byte[] out = sj.toString().getBytes(StandardCharsets.UTF_8);
+                            int length = out.length;http.setFixedLengthStreamingMode(length);
+                            http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                            http.connect();
+                            try(OutputStream os = http.getOutputStream()) {
+                                os.write(out);
+                                os.flush();
+                            }
+
                             //tgw.printLine("ОК!");
                             tgw.printLine("ОК!");
                         } catch (Exception ex) {
