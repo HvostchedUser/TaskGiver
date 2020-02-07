@@ -46,6 +46,7 @@ public class TaskGiverWindow extends JFrame {
         tadd.add(Box.createVerticalStrut(30));
         tadd.add(jb);
         tadd.add(Box.createVerticalStrut(10));
+        //tadd.add(new Box.Filler(new Dimension(0,0),new Dimension(0, 0),new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)));
         tadd2.add(tadd, BorderLayout.CENTER);
         tadd2.add(Box.createHorizontalStrut(20),BorderLayout.WEST);
         tadd2.add(Box.createHorizontalStrut(20),BorderLayout.EAST);
@@ -66,7 +67,7 @@ public class TaskGiverWindow extends JFrame {
         tadd3.add(Box.createVerticalStrut(30),BorderLayout.NORTH);
         setLayout(new BorderLayout());
         add(tadd2,BorderLayout.WEST);
-        add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.CENTER);
+        //add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.CENTER);
         tadd4.add(jtext, BorderLayout.CENTER);
         tadd3.add(tadd4);
         add(tadd3,BorderLayout.EAST);
@@ -78,11 +79,11 @@ public class TaskGiverWindow extends JFrame {
 
     public void printLine(String text) {
         jtext.setText(text+System.lineSeparator()+ jtext.getText());
-        try {
+        /*try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
         repaint();
     }
 }

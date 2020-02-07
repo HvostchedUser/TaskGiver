@@ -1,5 +1,10 @@
 package com.company;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.pdf.PdfWriter;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.FileFileFilter;
 import org.w3c.dom.ls.LSOutput;
 
 import javax.imageio.ImageIO;
@@ -44,8 +49,8 @@ public class Main {
                     @Override
                     public void run() {
                         try {
-                            int w = 595 * 4;
-                            int h = 832 * 4;
+                            int w = 595 * 1;
+                            int h = 832 * 1;
                             tgw.printLine("Генерация работы...");
                             tgw.printLine("    *Формат страницы: A4");
                             tgw.printLine("    *Размер одного изображения: "+w+"x"+h+" пикселей");
@@ -68,25 +73,39 @@ public class Main {
                                 directory.mkdir();
                                 //tgw.printLine("ОК!");
                             }
+
+                            Document document = new Document();
+                            document.setPageSize(new com.itextpdf.text.Rectangle(w+0,h+0));
+                            document.setMargins(0,0,0,0);
+                            PdfWriter.getInstance(document, new FileOutputStream(username+"/"+username+".pdf"));
+                            document.open();
+
                             String type = tgw.folder.getText();
                             tgw.printLine("    *Папка с заданиями: "+type);
                             int amount = (int) tgw.amount.getValue();
                             tgw.printLine("    *Количество задач: "+amount);
                             File dir = new File(type);
-                            File[] filesArray = dir.listFiles();
-                            ArrayList<File> files = new ArrayList<>();
-                            for (int i = 0; i < filesArray.length; i++) {
-                                files.add(filesArray[i]);
-                            }
+                            //File[] filesArray = dir.listFiles();
+                            Collection<File> filesCol = FileUtils.listFiles(
+                                    dir,
+                                    FileFileFilter.FILE,
+                                    DirectoryFileFilter.DIRECTORY
+                            );
+                            ArrayList<File> files=new ArrayList<>();
+                            files.addAll(filesCol);
+
+                            //for (int i = 0; i < filesArray.length; i++) {
+                            //    files.add(filesArray[i]);
+                            //}
                             if (amount > files.size()) {
-                                tgw.printLine("    !Это больше, чем доступное количество задач. Укажите новое значение и прпробуйте снова.");
-                                tgw.printLine("    *В папке найдено задач: "+filesArray.length);
+                                tgw.printLine("    !Это больше, чем доступное количество задач. Укажите новое значение и попробуйте снова.");
+                                tgw.printLine("    *В папке найдено задач: "+files.size());
                                 return;
                             }
-                            tgw.printLine("    *В папке найдено задач: "+filesArray.length);
-                            tgw.printLine("    *Для создания работы будет использован следующий код: "+type.hashCode());
-                            Random r = new Random(type.hashCode());
-                            TreeSet<Integer> ts = new TreeSet<>();
+                            tgw.printLine("    *В папке найдено задач: "+files.size());
+                            //tgw.printLine("    *Для создания работы будет использован следующий код: "+type.hashCode());
+                            Random r = new Random();//type.hashCode());
+                            HashSet<Integer> ts = new HashSet<>();
 
                             tgw.printLine("Формирование работы...");
                             while (ts.size() < amount) {
@@ -97,6 +116,8 @@ public class Main {
                             int curpos = 0;
                             BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                             Graphics2D g2d = (Graphics2D) bi.getGraphics();
+                            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                            g2d.setFont(new Font("SansSerif", Font.PLAIN, 17*1));
                             g2d.setPaint(new Color(255, 255, 255));
                             g2d.fillRect(0, 0, w, h);
                             String result = username + System.lineSeparator();
@@ -112,8 +133,11 @@ public class Main {
                                 if (curpos + task.getHeight() > bi.getHeight()) {
                                     tgw.printLine("Сохранение " + iter + " страницы ...");
                                     ImageIO.write(bi, "png", new File("" + username + "/" + username + ", лист №" + iter + ".png"));
+                                    document.add(com.itextpdf.text.Image.getInstance( new File("" + username + "/" + username + ", лист №" + iter + ".png").getAbsolutePath()));
                                     bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                                     g2d = (Graphics2D) bi.getGraphics();
+                                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                                    g2d.setFont(new Font("SansSerif", Font.PLAIN, 17*1));
                                     g2d.setPaint(new Color(255, 255, 255));
                                     g2d.fillRect(0, 0, w, h);
                                     curpos = 0;
@@ -121,6 +145,9 @@ public class Main {
                                     //tgw.printLine("ОК!");
                                 }
                                 g2d.drawImage(task, 0, curpos, null);
+                                g2d.setColor(new Color(0,0,0));
+                                g2d.fillRect(0,curpos-1,w,2);
+                                g2d.drawString("№"+taskNumber,0,curpos+20);
                                 curpos += task.getHeight();
                                 taskNumber++;
                                 //tgw.printLine("ОК!");
@@ -128,7 +155,9 @@ public class Main {
                             //tgw.printLine("ОК!");
                             tgw.printLine("Сохранение "+iter+" страницы ...");
                             ImageIO.write(bi, "png", new File("" + username + "/" + username + ", лист №" + iter + ".png"));
+                            document.add(com.itextpdf.text.Image.getInstance( new File("" + username + "/" + username + ", лист №" + iter + ".png").getAbsolutePath()));
                             //tgw.printLine("ОК!");
+                            document.close();
                             tgw.printLine("Сохранение файла с описанием задания...");
                             tgw.printLine("    *Название файла описания: "+ username + ".txt");
                             BufferedWriter bw = new BufferedWriter(new FileWriter("" + username + "/" + username + ".txt"));
